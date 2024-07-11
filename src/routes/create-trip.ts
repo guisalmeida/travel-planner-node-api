@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { prisma } from '../lib/prisma';
 import { ZodTypeProvider } from 'fastify-type-provider-zod';
 import { z } from 'zod';
-import { getMailClient } from '../lib/mail';
+import { getMailClient } from '../lib/email';
 import dayjs from 'dayjs';
 import nodemailer from 'nodemailer';
 
