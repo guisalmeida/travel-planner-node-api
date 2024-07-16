@@ -1,6 +1,4 @@
-import { FastifyInstance } from 'fastify';
-import { ZodTypeProvider } from 'fastify-type-provider-zod';
-import { z } from 'zod';
+import { dayjs } from "../lib/dayjs";
 
 export async function confirmTrip(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get('/trips/:tripId/confirm', { schema: {
