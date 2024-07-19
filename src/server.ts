@@ -8,6 +8,7 @@ import { createActivity } from './routes/createActivity';
 import { getActivities } from './routes/getActivities';
 import { createLink } from './routes/createLink';
 import { getLinks } from './routes/getLinks';
+import { getParticipants } from './routes/get-participants';
 
 const app = fastify();
 
@@ -25,6 +26,7 @@ app.register(confirmTrip);
 app.register(confirmParticipant);
 app.register(getActivities);
 app.register(getLinks);
+app.register(getParticipants);
 
 app.listen({ port: 3333 }).then(() => {
   console.log('Server running...');
