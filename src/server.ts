@@ -1,13 +1,13 @@
 import fastify from 'fastify';
 import cors from '@fastify/cors';
-import { createTrip } from './routes/create-trip';
+import { createTrip } from './routes/createTrip';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
-import { confirmTrip } from './routes/confirm-trip';
-import { confirmParticipant } from './routes/confirm-participant';
-import { createActivity } from './routes/create-activity';
-import { getActivities } from './routes/get-activities';
-import { createLink } from './routes/create-link';
-import { getLinks } from './routes/get-links';
+import { confirmTrip } from './routes/confirmTrip';
+import { confirmParticipant } from './routes/confirmParticipant';
+import { createActivity } from './routes/createActivity';
+import { getActivities } from './routes/getActivities';
+import { createLink } from './routes/createLink';
+import { getLinks } from './routes/getLinks';
 
 const app = fastify();
 
