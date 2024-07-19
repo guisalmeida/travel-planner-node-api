@@ -56,13 +56,13 @@ export async function confirmTrip(app: FastifyInstance) {
 
       const formatedStartedDate = dayjs(trip.starts_at).format("LL");
       const formatedEndDate = dayjs(trip.ends_at).format("LL");
-      const mail = await getMailClient();
+      const email = await getMailClient();
 
       await Promise.all(
         trip.participants.map(async (participant) => {
           const confirmationLink = `http://localhost:3333/participants/${participant.id}/confirm`;
 
-          const message = await mail.sendMail({
+          const message = await email.sendMail({
             from: {
               name: "Planner Team",
               address: "planner@email.com",
