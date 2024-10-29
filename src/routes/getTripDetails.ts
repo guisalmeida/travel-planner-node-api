@@ -25,6 +25,12 @@ export async function getTripDetails(app: FastifyInstance) {
           is_confirmed: true,
           destination: true,
           participants: true,
+          links: true,
+          activities: {
+            orderBy: {
+              occurs_at: "asc",
+            },
+          },
         },
         where: {
           id: tripId,
