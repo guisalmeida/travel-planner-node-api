@@ -1,6 +1,4 @@
-import { error } from "console";
 import { FastifyInstance } from "fastify";
-import { ClientError } from "./errors/clientError";
 import { ZodError } from "zod";
 
 type FastifyErrorHandler = FastifyInstance["errorHandler"];
@@ -9,12 +7,12 @@ export const ErrorHadler: FastifyErrorHandler = (err, req, res) => {
   console.log(err);
 	if (err instanceof ZodError) {
 		return res.status(400).send({
-			message: 'Inválid input',
-			erros: err.flatten().fieldErrors
+			message: 'Invalid input',
+			errors: err.flatten().fieldErrors
 		})
 	}
 
-  if (err instanceof ClientError) {
+  if (err instanceof Error) {
     return res.status(400).send({ message: err.message });
   }
 

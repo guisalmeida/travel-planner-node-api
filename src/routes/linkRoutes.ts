@@ -1,74 +1,26 @@
 import { FastifyInstance } from "fastify";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
-import { z } from "zod";
-import { prisma } from "../lib/prisma";
+
+
+import { createLinkController, getLinksController } from "../controllers/linkControllers";
+import { createLinkSchema, getLinksSchema } from "../schemas/linkSchemas";
+
+const getLinksOpts = {
+  schema: getLinksSchema,
+  handler: getLinksController,
+};
+
+const createLinkOpts = {
+  schema: createLinkSchema,
+  handler: createLinkController,
+};
 
 export async function linkRoutes(app: FastifyInstance) {
-  app.withTypeProvider<ZodTypeProvider>().get(
-    "/trips/:tripId/links",
-    {
-      schema: {
-        params: z.object({
-          tripId: z.string().uuid(),
-        }),
-      },
-    },
-    async (req) => {
-      const { tripId } = req.params;
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .get("/trips/:tripId/links", getLinksOpts);
 
-      const trip = await prisma.trip.findUnique({
-        where: {
-          id: tripId,
-        },
-        include: {
-          links: true,
-        },
-      });
-
-      if (!trip) {
-        throw new Error("Trip not found!");
-      }
-
-      return { links: trip.links };
-    }
-  );
-
-  app.withTypeProvider<ZodTypeProvider>().post(
-    "/trips/:tripId/links",
-    {
-      schema: {
-        params: z.object({
-          tripId: z.string().uuid(),
-        }),
-        body: z.object({
-          title: z.string().min(4),
-          url: z.string().url(),
-        }),
-      },
-    },
-    async (req) => {
-      const { tripId } = req.params;
-      const { title, url } = req.body;
-
-      const trip = await prisma.trip.findUnique({
-        where: {
-          id: tripId,
-        },
-      });
-
-      if (!trip) {
-        throw new Error("Trip not found!");
-      }
-
-      const link = await prisma.link.create({
-        data: {
-          title,
-          url,
-          trip_id: tripId,
-        },
-      });
-
-      return { linkId: link.id };
-    }
-  );
+  app
+    .withTypeProvider<ZodTypeProvider>()
+    .post("/trips/:tripId/links", createLinkOpts);
 }
