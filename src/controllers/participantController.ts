@@ -6,21 +6,24 @@ interface ConfirmParticipantReq extends FastifyRequest {
   params: {
     participantId: string;
   };
-};
+}
 
 interface GetParticipantReq extends FastifyRequest {
   params: {
     participantId: string;
   };
-};
+}
 
 interface GetParticipantsReq extends FastifyRequest {
   params: {
     tripId: string;
   };
-};
+}
 
-export const confirmParticipantController = async (req: ConfirmParticipantReq, res: FastifyReply) => {
+export const confirmParticipantController = async (
+  req: ConfirmParticipantReq,
+  reply: FastifyReply
+) => {
   const { participantId } = req.params;
   const participant = await prisma.participant.findUnique({
     where: {
@@ -29,13 +32,13 @@ export const confirmParticipantController = async (req: ConfirmParticipantReq, r
   });
 
   if (!participant) {
-    throw new Error("Participant not found!");
+    return reply.status(404).send({ error: "Participant not found!" });
   }
 
   if (participant.is_confirmed) {
-    return res.redirect(
-      `${env.API_BASE_URL}/trips/${participant.trip_id}`
-    );
+    return reply
+      .status(303)
+      .redirect(`${env.API_BASE_URL}/trips/${participant.trip_id}`);
   }
 
   await prisma.participant.update({
@@ -43,10 +46,15 @@ export const confirmParticipantController = async (req: ConfirmParticipantReq, r
     data: { is_confirmed: true },
   });
 
-  return res.redirect(`${env.API_BASE_URL}/trips/${participant.trip_id}`);
-}
+  return reply
+    .status(303)
+    .redirect(`${env.API_BASE_URL}/trips/${participant.trip_id}`);
+};
 
-export const getParticipantController = async (req: GetParticipantReq) => {
+export const getParticipantController = async (
+  req: GetParticipantReq,
+  reply: FastifyReply
+) => {
   const { participantId } = req.params;
 
   const participant = await prisma.participant.findUnique({
@@ -62,13 +70,16 @@ export const getParticipantController = async (req: GetParticipantReq) => {
   });
 
   if (!participant) {
-    throw new Error("Participant not found!");
+    return reply.status(404).send({ error: "Participant not found!" });
   }
 
-  return { participant };
-}
+  return reply.send({ participant });
+};
 
-export const getparticipantsController = async (req: GetParticipantsReq) => {
+export const getparticipantsController = async (
+  req: GetParticipantsReq,
+  reply: FastifyReply
+) => {
   const { tripId } = req.params;
 
   const trip = await prisma.trip.findUnique({
@@ -91,8 +102,8 @@ export const getparticipantsController = async (req: GetParticipantsReq) => {
   });
 
   if (!trip) {
-    throw new Error("Trip not found!");
+    return reply.status(404).send({ error: "Trip not found!" });
   }
 
-  return { participants: trip.participants };
-}
+  return reply.send({ participants: trip.participants });
+};

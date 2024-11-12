@@ -3,6 +3,7 @@ import cors from "@fastify/cors";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import {
+  jsonSchemaTransform,
   serializerCompiler,
   validatorCompiler,
 } from "fastify-type-provider-zod";
@@ -25,11 +26,12 @@ app.register(fastifySwagger, {
   openapi: {
     openapi: '3.0.0',
     info: {
-      title: 'Test swagger',
-      description: 'Testing the Fastify swagger API',
-      version: '0.1.0'
+      title: 'Travel Planner API',
+      description: 'Travel Planner API documentation',
+      version: '1.0.0'
     },
-  }
+  },
+  transform: jsonSchemaTransform,
 });
 
 app.register(fastifySwaggerUi, {
@@ -47,6 +49,12 @@ app.register(linkRoutes);
 app.register(participantRoutes);
 app.register(inviteRoutes);
 
-app.listen({ port: env.PORT }).then(() => {
-  console.log("Server running...");
-});
+async function run() {
+  await app.ready();
+  await app.listen({ port: env.PORT });
+
+  console.log(`Server running at http://localhost:3333`);
+  console.log(`Swagger Documentation running at http://localhost:3333/documentation`);
+}
+
+run();

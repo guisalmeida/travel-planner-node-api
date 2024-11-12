@@ -3,7 +3,7 @@ import { dayjs } from "../lib/dayjs";
 import { getMailClient } from "../lib/email";
 import nodemailer from "nodemailer";
 import { env } from "../env";
-import { FastifyRequest } from "fastify";
+import { FastifyReply, FastifyRequest } from "fastify";
 
 interface SendInviteReq extends FastifyRequest {
   params: {
@@ -14,7 +14,7 @@ interface SendInviteReq extends FastifyRequest {
   }
 };
 
-export const sendInviteController = async (req: SendInviteReq) => {
+export const sendInviteController = async (req: SendInviteReq, reply: FastifyReply) => {
   const { tripId } = req.params;
   const { email } = req.body;
 
@@ -25,7 +25,7 @@ export const sendInviteController = async (req: SendInviteReq) => {
   });
 
   if (!trip) {
-    throw new Error("Trip not found!");
+    return reply.status(404).send({ error: "Trip not found!" });
   }
 
   const participant = await prisma.participant.create({
@@ -36,38 +36,42 @@ export const sendInviteController = async (req: SendInviteReq) => {
   });
 
   const emailToSend = await getMailClient();
-  const formatedStartedDate = dayjs(trip.starts_at).format("LL");
-  const formatedEndDate = dayjs(trip.ends_at).format("LL");
+  const formattedStartDate = dayjs(trip.starts_at).format("LL");
+  const formattedEndDate = dayjs(trip.ends_at).format("LL");
   const confirmationLink = `${env.WEB_BASE_URL}/participants/${participant.id}/confirm`;
 
-  const message = await emailToSend.sendMail({
-    from: {
-      name: "Planner Team",
-      address: "planner@email.com",
-    },
-    to: participant.email,
-    subject: `Confirm your trip to ${trip.destination}`,
-    html: `
-  <div style="text-align: center;">
-        <h2>
-          Você foi convidado(a) para participar de uma viagem para <strong>${trip.destination}</strong> nas datas de ${formatedStartedDate} a ${formatedEndDate}.
-        </h2>
+  try {
+    const message = await emailToSend.sendMail({
+      from: {
+        name: "Planner Team",
+        address: "planner@email.com",
+      },
+      to: participant.email,
+      subject: `Confirm your trip to ${trip.destination}`,
+      html: `
+        <div style="text-align: center;">
+          <h2>
+            Você foi convidado(a) para participar de uma viagem para <strong>${trip.destination}</strong> nas datas de ${formattedStartDate} a ${formattedEndDate}.
+          </h2>
 
-        <p>Para confirmar sua presença na viagem, clique no link abaixo:</p>
-        <a href="${confirmationLink}" >Confirmar presença</a>
+          <p>Para confirmar sua presença na viagem, clique no link abaixo:</p>
+          <a href="${confirmationLink}" >Confirmar presença</a>
 
-        <p>Caso esteja usando o dispositivo móvel, você também pode confirmar a criação da viagem pelos aplicativos:</p>
+          <p>Caso esteja usando o dispositivo móvel, você também pode confirmar a criação da viagem pelos aplicativos:</p>
 
-        <a href="#">Aplicativo para iPhone</a>
-        <br>
-        <a href="#">Aplicativo para Android</a>
-        <br>
-        <small>Caso você não saiba do que se trata esse e-mail, apenas ignore esse e-mail.</small>
-      </div>
-  `.trim(),
-  });
+          <a href="#">Aplicativo para iPhone</a>
+          <br>
+          <a href="#">Aplicativo para Android</a>
+          <br>
+          <small>Caso você não saiba do que se trata esse e-mail, apenas ignore esse e-mail.</small>
+        </div>
+      `.trim(),
+    });
 
-  console.log(nodemailer.getTestMessageUrl(message));
+    console.log(nodemailer.getTestMessageUrl(message));
 
-  return { participantId: participant.id };
-}
+    return reply.status(201).send({ participantId: participant.id });
+  } catch (error) {
+    return reply.status(500).send({ error: "Failed to send invitation email." });
+  }
+};

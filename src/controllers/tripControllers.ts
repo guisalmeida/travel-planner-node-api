@@ -39,7 +39,10 @@ interface getTripReq extends FastifyRequest {
   };
 }
 
-export const createTripController = async (req: CreateTripReq) => {
+export const createTripController = async (
+  req: CreateTripReq,
+  reply: FastifyReply
+) => {
   const {
     destination,
     starts_at,
@@ -53,7 +56,7 @@ export const createTripController = async (req: CreateTripReq) => {
     dayjs(starts_at).isBefore(new Date()) ||
     dayjs(ends_at).isBefore(starts_at)
   ) {
-    throw new Error("Invalid trip date.");
+    return reply.status(400).send({ error: "Invalid trip date." });
   }
 
   const trip = await prisma.trip.create({
@@ -116,10 +119,13 @@ export const createTripController = async (req: CreateTripReq) => {
 
   console.log(nodemailer.getTestMessageUrl(message));
 
-  return { tripId: trip.id };
+  return reply.status(201).send({ tripId: trip.id });
 };
 
-export const confirmTripController = async (req: ConfirmTripReq, reply: FastifyReply) => {
+export const confirmTripController = async (
+  req: ConfirmTripReq,
+  reply: FastifyReply
+) => {
   const { tripId } = req.params;
   const trip = await prisma.trip.findUnique({
     where: {
@@ -145,11 +151,11 @@ export const confirmTripController = async (req: ConfirmTripReq, reply: FastifyR
   // })
 
   if (!trip) {
-    throw new Error("Trip not found!");
+    return reply.status(404).send({ error: "Trip not found!" });
   }
 
   if (trip.is_confirmed) {
-    return reply.redirect(`${env.API_BASE_URL}/trips/${tripId}`);
+    return reply.status(303).redirect(`${env.API_BASE_URL}/trips/${tripId}`);
   }
 
   await prisma.trip.update({
@@ -196,10 +202,13 @@ export const confirmTripController = async (req: ConfirmTripReq, reply: FastifyR
     })
   );
 
-  return reply.redirect(`${env.API_BASE_URL}/trips/${tripId}`);
+  return reply.status(303).redirect(`${env.API_BASE_URL}/trips/${tripId}`);
 };
 
-export const updateTripController = async (req: UpdateTripReq) => {
+export const updateTripController = async (
+  req: UpdateTripReq,
+  reply: FastifyReply
+) => {
   const { tripId } = req.params;
   const { destination, starts_at, ends_at } = req.body;
 
@@ -210,14 +219,14 @@ export const updateTripController = async (req: UpdateTripReq) => {
   });
 
   if (!trip) {
-    throw new Error("Trip not found.");
+    return reply.status(404).send({ error: "Trip not found!" });
   }
 
   if (
     dayjs(starts_at).isBefore(new Date()) ||
     dayjs(ends_at).isBefore(starts_at)
   ) {
-    throw new Error("Invalid trip date.");
+    return reply.status(400).send({ error: "Invalid trip date." });
   }
 
   await prisma.trip.update({
@@ -231,10 +240,10 @@ export const updateTripController = async (req: UpdateTripReq) => {
     },
   });
 
-  return { tripId: trip.id };
+  return reply.send({ tripId });
 };
 
-export const getTripController = async (req: getTripReq) => {
+export const getTripController = async (req: getTripReq, reply: FastifyReply) => {
   const { tripId } = req.params;
 
   const trip = await prisma.trip.findUnique({
@@ -258,8 +267,8 @@ export const getTripController = async (req: getTripReq) => {
   });
 
   if (!trip) {
-    throw new Error("Trip not found!");
+    return reply.status(404).send({ error: "Trip not found!" });
   }
 
-  return { trip };
+  return reply.send({ trip });
 };

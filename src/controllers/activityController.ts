@@ -6,19 +6,22 @@ interface GetActivitiesReq extends FastifyRequest {
   params: {
     tripId: string;
   };
-};
+}
 
 interface CreateActivitiesReq extends FastifyRequest {
   params: {
     tripId: string;
   };
   body: {
-    title: string,
-    occurs_at: Date
-  }
-};
+    title: string;
+    occurs_at: Date;
+  };
+}
 
-export const getActivitiesController = async (req: GetActivitiesReq, reply: FastifyReply) => {
+export const getActivitiesController = async (
+  req: GetActivitiesReq,
+  reply: FastifyReply
+) => {
   const { tripId } = req.params;
 
   const trip = await prisma.trip.findUnique({
@@ -36,7 +39,9 @@ export const getActivitiesController = async (req: GetActivitiesReq, reply: Fast
     "days"
   );
 
-  const activities = Array.from({ length: diffDaysBetweenStartAndEnd + 1 }).map((_, index) => {
+  const allActivities = Array.from({
+    length: diffDaysBetweenStartAndEnd + 1,
+  }).map((_, index) => {
     const date = dayjs(trip.starts_at).add(index, "days");
 
     return {
@@ -47,10 +52,13 @@ export const getActivitiesController = async (req: GetActivitiesReq, reply: Fast
     };
   });
 
-  reply.send({ activities });
+  reply.send({ allActivities });
 };
 
-export const createActivityController = async (req: CreateActivitiesReq) => {
+export const createActivityController = async (
+  req: CreateActivitiesReq,
+  reply: FastifyReply
+) => {
   const { tripId } = req.params;
   const { title, occurs_at } = req.body;
 
@@ -61,14 +69,14 @@ export const createActivityController = async (req: CreateActivitiesReq) => {
   });
 
   if (!trip) {
-    throw new Error("Trip not found!");
+    return reply.status(404).send({ error: "Trip not found!" });
   }
 
   if (
     dayjs(occurs_at).isBefore(trip.starts_at) ||
     dayjs(occurs_at).isAfter(trip.ends_at)
   ) {
-    throw new Error("Invalid date.");
+    return reply.status(400).send({ error: "Invalid date." });
   }
 
   const activity = await prisma.activity.create({
@@ -79,5 +87,5 @@ export const createActivityController = async (req: CreateActivitiesReq) => {
     },
   });
 
-  return { activityId: activity.id };
-}
+  return reply.status(201).send({ activityId: activity.id });
+};

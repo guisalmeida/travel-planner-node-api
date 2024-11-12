@@ -1,4 +1,4 @@
-import { FastifyRequest } from "fastify";
+import { FastifyReply, FastifyRequest } from "fastify";
 import { prisma } from "../lib/prisma";
 
 interface getLinksReq extends FastifyRequest {
@@ -17,7 +17,7 @@ interface CreatetLinkReq extends FastifyRequest {
   };
 }
 
-export const getLinksController = async (req: getLinksReq) => {
+export const getLinksController = async (req: getLinksReq, reply: FastifyReply) => {
   const { tripId } = req.params;
 
   const trip = await prisma.trip.findUnique({
@@ -30,13 +30,13 @@ export const getLinksController = async (req: getLinksReq) => {
   });
 
   if (!trip) {
-    throw new Error("Trip not found!");
+    return reply.status(404).send({ error: "Trip not found!" });
   }
 
-  return { links: trip.links };
+  return reply.send({ links: trip.links });
 };
 
-export const createLinkController = async (req: CreatetLinkReq) => {
+export const createLinkController = async (req: CreatetLinkReq, reply: FastifyReply) => {
   const { tripId } = req.params;
   const { title, url } = req.body;
 
@@ -47,7 +47,7 @@ export const createLinkController = async (req: CreatetLinkReq) => {
   });
 
   if (!trip) {
-    throw new Error("Trip not found!");
+    return reply.status(404).send({ error: "Trip not found!" });
   }
 
   const link = await prisma.link.create({
@@ -58,5 +58,5 @@ export const createLinkController = async (req: CreatetLinkReq) => {
     },
   });
 
-  return { linkId: link.id };
+  return reply.status(201).send({ linkId: link.id });
 };
